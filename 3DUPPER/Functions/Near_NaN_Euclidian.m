@@ -1,35 +1,33 @@
-function Dataout_3D=Near_NaN_Euclidian(Data0,Number_K_near,graph)
+function Dataout=Near_NaN_Euclidian(Data0,Number_K_near,graph)
+%%
 
-
-N=size(Data0,3);
-Np=size(Data0,1);
-Data=reshape(Data0,[Np*3,N]);
-Dataout=Data;
+[Np,Ndim,Ns] = size(Data0);
+Data = reshape(Data0,[Np*Ndim,Ns]);
+Dataout = Data;
    
-indexNaN=find(sum(isnan(Data))>0); % return nan index of data
-for ii=1:length(indexNaN)
-    Y=Data(:,indexNaN(ii));
-    indexNaN_Y=find(isnan(Y)); % return the nan index of vector sample 
+incomplete_samples = find(any(~isfinite(Data),1)); % return nan index of data
+for ii=1:length(incomplete_samples)
+    Y=Data(:,incomplete_samples(ii));
+    missing_y = ~isfinite(Y); % return the nan index of vector sample 
     
-    indx_noNaN=find(sum(isnan(Data(indexNaN_Y,:)),1)==0);
-    Data_reduced=Data(:,indx_noNaN);
+    nonmissing_samples = all(isfinite(Data(missing_y,:)),1);
+    Data_reduced = Data(:,nonmissing_samples);
     
     N_reduced=size(Data_reduced,2);
     Y0=Y*ones(1,N_reduced);
 
     dif2=(Data_reduced-Y0).^2;
-    mean_dif20=nanmean(dif2);
-    [mean_dif2,indsort] = sort(mean_dif20,'ascend');
-    indsort_asc_KNN =indsort(1:Number_K_near);
-    X=Data_reduced(:,indsort_asc_KNN);
-    T=nanmean(X,2);
+    [~,indsort] = sort(mean(dif2,"omitnan"),'ascend');
+    indsort_asc_KNN = indsort(1:Number_K_near);
+    X = Data_reduced(:,indsort_asc_KNN);
+    T = mean(X,2,"omitnan");
 
-    Y(indexNaN_Y)=T(indexNaN_Y);
-    Dataout(:,indexNaN(ii))=Y;
+    Y(missing_y) = T(missing_y);
+    Dataout(:,incomplete_samples(ii)) = Y;
     %ii
     
 end
-Dataout_3D=reshape(Dataout,Np,3,N);
+Dataout = reshape(Dataout,Np,Ndim,Ns);
 
 if graph
     figure
@@ -46,4 +44,6 @@ if graph
     title('Recounstructed Data Base on KNN')
     ylabel('3D-Poses')
     xlabel('Number of Sample')
+end
+%%
 end
