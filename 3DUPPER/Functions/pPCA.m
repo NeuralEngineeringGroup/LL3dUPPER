@@ -1,25 +1,31 @@
-function [mean_data NumDimcut Cov_pPCA eignValues eignVectors]=pPCA(Data_3D,Threshold_Eigen,graph)
+function [mean_pose_vec, NumDimcut, Cov_pPCA, eignValues, eignVectors]=pPCA(Data_in,Threshold_Eigen,plot_results,opts)
 %ref
 %https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.934.5867&rep=rep1&type=pdf
+%%
+arguments
+	Data_in				(:,:,:)	{mustBeFloat}
+	Threshold_Eigen		(1,1)	double	= 0.95
+	plot_results		(1,1)	logical	= false
+	opts.cov_opts		(1,1)	struct = struct(Method="ogk",NumOGKIterations=2)
+end
+%%
 
-Ns=size(Data_3D,3);
-Np=size(Data_3D,1);
+[Nparts,Ndims,N]=size(data);
+data_vec = reshape(Data_in,[Nparts*3,N]);
+NP = Nparts*Ndims;
 
-Data=reshape(Data_3D,[Np*3,Ns]);
+mean_pose_vec = mean(data_vec,3,"omitnan"); % transpose Posev to calculate mean from all frame for x,y,z all 11 poses and then again transpose.
 
-NP=size(Data,1);
-
-mean_data = nanmean(Data,2); % transpose Posev to calculate mean from all frame for x,y,z all 11 poses and then again transpose.
-mean_data_3D = reshape(mean_data,Np,3);
-
-Data0=Data-mean_data*ones(1,Ns); % pose without mean
-[Cov_Data0,~,~,outliers] = robustcov(Data0','Method','ogk','NumOGKIterations',2);%estimate of the robust Minimum Covariance Determinant (MCD)
+cov_opts = namedargs2cell(opts.cov_opts);
+Cov_Data0 = robustcov((data_vec - mean_pose_vec).', cov_opts{:});
 
 %%%% PCA
 [eignVectors,eignValues] = eig(Cov_Data0,'vector');
 [eignValues,indsort] = sort(eignValues,'descend');
 eignVectors = eignVectors(:,indsort);
+
 %construct the optimal hyperplane with the error projection
+error_project = zeros(length(eignValues),1);
 for k=1:length(eignValues)
     error_project(k)=sum(eignValues(1:k))/sum(eignValues);
 end
@@ -33,12 +39,12 @@ sigma2=mean(eignValues(r0(1)+1:end)); % averaging from remaining eigenvalues
 diagonal_vector=[eignValues(1:r0(1))',sigma2*ones(1,NP-r0(1))]; %% defining Sigma^2 
 Cov_pPCA=eignVectors*(diag(diagonal_vector))*eignVectors';
 
-if graph
+if plot_results
     %
-%     figure 
-%     pcolor(Cov_Data0-Cov_pPCA)
-%     colorbar
-%     title('Cov-Original - Cov-pPCA')
+    figure 
+    pcolor(Cov_Data0-Cov_pPCA)
+    colorbar
+    title('Cov-Original - Cov-pPCA')
     %
     figure
     plot(error_project,'LineWidth',3)
@@ -47,4 +53,7 @@ if graph
     ylim([0. 1.01])
     xticks(1:1:length(eignValues))
     xline(r0(1),'--g','LineWidth',2)
+end
+
+%%
 end
