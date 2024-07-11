@@ -1,9 +1,9 @@
-function [mean_pose_vec, NumDimcut, Cov_pPCA, eignValues, eignVectors]=pPCA(Data_in,Threshold_Eigen,plot_results,opts)
+function [mean_pose_vec, NumDimcut, Cov_pPCA, eignValues, eignVectors]=pPCA(data,Threshold_Eigen,plot_results,opts)
 %ref
 %https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.934.5867&rep=rep1&type=pdf
 %%
 arguments
-	Data_in				(:,:,:)	{mustBeFloat}
+	data				(:,:,:)	{mustBeFloat}
 	Threshold_Eigen		(1,1)	double	= 0.95
 	plot_results		(1,1)	logical	= false
 	opts.cov_opts		(1,1)	struct = struct(Method="ogk",NumOGKIterations=2)
@@ -11,10 +11,10 @@ end
 %%
 
 [Nparts,Ndims,N]=size(data);
-data_vec = reshape(Data_in,[Nparts*3,N]);
+data_vec = reshape(data,[Nparts*3,N]);
 NP = Nparts*Ndims;
 
-mean_pose_vec = mean(data_vec,3,"omitnan"); % transpose Posev to calculate mean from all frame for x,y,z all 11 poses and then again transpose.
+mean_pose_vec = mean(data_vec,2,"omitnan"); % transpose Posev to calculate mean from all frame for x,y,z all 11 poses and then again transpose.
 
 cov_opts = namedargs2cell(opts.cov_opts);
 Cov_Data0 = robustcov((data_vec - mean_pose_vec).', cov_opts{:});

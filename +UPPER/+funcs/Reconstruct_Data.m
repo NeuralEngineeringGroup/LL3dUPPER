@@ -5,7 +5,7 @@ function [Data_reconstruct_3D]=Reconstruct_Data(RawData3D_full,Data_3D_KNN,Thres
 %Data_3D_KNN=RawData3D_full;
 is_outlier = false(Np, Framedim,Nsample);
 for n = 1:Nsample
-    is_outlier(:,:,n) = detect_outliers(squeeze(Data_3D_KNN(:,:,n)), mean_pose_3D, Cov_pPCA, Threshold_Outliers);  
+    is_outlier(:,:,n) = UPPER.funcs.detect_outliers(squeeze(Data_3D_KNN(:,:,n)), mean_pose_3D, Cov_pPCA, Threshold_Outliers);  
 end
 Data_3D_KNN(is_outlier==1) = NaN;
 % Data_2D_KNN = reshape(Data_3D_KNN,Np*Framedim,Nsample);

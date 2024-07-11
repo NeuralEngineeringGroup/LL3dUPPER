@@ -1,4 +1,4 @@
-function [data_filled] = knn_imputation(data,num_neighbors,plot_results)
+function [data_filled] = knn_impute_points(data,num_neighbors,plot_results)
 %%
 arguments
 	data			(:,:,:)	{mustBeFloat}
