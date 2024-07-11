@@ -16,6 +16,6 @@ RawData3D_full=RawData3D(:,:,1:2000);
 % estimated by Ransac, Mean of pPCA, Covariance of pPCA and Eigenvalues
 % and eigenpose
 
-[Data_3D_KNN Mean_Ransac Mean_pPCA Cov_pPCA EignValues EignVectors]=Estimation_Model(RawData3D_full,0.8);
+[Data_3D_KNN Mean_Ransac Mean_pPCA Cov_pPCA EignValues EignVectors]=UPPER.funcs.Estimation_Model(RawData3D_full,0.8);
 
 

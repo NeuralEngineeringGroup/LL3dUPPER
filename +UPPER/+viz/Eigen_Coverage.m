@@ -11,21 +11,21 @@ for ii=1:5
 
 Nsample=round(Ns*ch(jj)*Ratio);
 Rand_ind = randsample(Ns,Nsample);
-RawData3D=RawData3D_full(:,:,Rand_ind );
+RawData3D = RawData3D_full(:,:,Rand_ind );
 
-mean_pose_3D = Estimate_mean_RANSAC(RawData3D, false);
+mean_pose_3D = UPPER.funcs.estimate_mean_pose_RANSAC(RawData3D, false);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%alignment
-Data_3D_align = Alignment(RawData3D, mean_pose_3D);
+Data_3D_align = UPPER.funcs.Alignment(RawData3D, mean_pose_3D);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%Filling data with KNN=5
 K = 5;
-Data_3D_KNN = Near_NaN_Euclidian(Data_3D_align, K, false);
-Data_3D_KNN_P=Data_3D_KNN ;
-Data_KNN_reshape=reshape(Data_3D_KNN, Np*Framedim,Nsample);
+Data_3D_KNN = UPPER.funcs.knn_impute_points(Data_3D_align, K, false);
+Data_3D_KNN_P = Data_3D_KNN ;
+Data_KNN_reshape = reshape(Data_3D_KNN, Np*Framedim,Nsample);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%PPCA
-[mean_pose_ppca, ~, Cov_pPCA, eignValues, eignVectors] = pPCA(Data_3D_KNN,Threshold_Eigen,false);
+[mean_pose_ppca, ~, Cov_pPCA, eignValues, eignVectors] = UPPER.funcs.pPCA(Data_3D_KNN,Threshold_Eigen,false);
 
 mean_pose_3D_ppca = reshape(mean_pose_ppca,[Np,Framedim]);
 
@@ -36,18 +36,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%detect & remove outliers
 is_outlier = false(Np, Framedim,Nsample);
 for n = 1:Nsample
-    is_outlier(:,:,n) = detect_outliers(squeeze(Data_3D_KNN(:,:,n)), mean_pose_3D, Cov_pPCA, Threshold_Outliers);  
+    is_outlier(:,:,n) = UPPER.funcs.detect_outliers(squeeze(Data_3D_KNN(:,:,n)), mean_pose_3D, Cov_pPCA, Threshold_Outliers);  
 end
 Data_3D_KNN(is_outlier==1) = NaN;
 Data_2D_KNN=reshape(Data_3D_KNN,Np*Framedim,Nsample);
 Outlier_percent_fram=(length(find(sum(isnan(Data_2D_KNN))))/(Nsample))*100;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%re-align data without outliers (very important!!!) 
-Data_3D_alignment_WO = Alignment(Data_3D_KNN, mean_pose_3D);
+Data_3D_alignment_WO = UPPER.funcs.Alignment(Data_3D_KNN, mean_pose_3D);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%reconstruction
 Data_3D_alignment_WO_reshape = reshape(Data_3D_alignment_WO, Np*Framedim,Nsample);
-Data_reconstruct = Theoritical_Estimate_Correction(Data_3D_alignment_WO_reshape,mean_pose_ppca,Cov_pPCA);
+Data_reconstruct = UPPER.funcs.theoretical_estimate_correction(Data_3D_alignment_WO_reshape,mean_pose_ppca,Cov_pPCA);
 Data_reconstruct_3D = reshape(Data_reconstruct, Np, Framedim, Nsample);
 
 % Data_reconstruct_3D_align=Alignment(Data_reconstruct_3D, mean_pose_3D);
@@ -90,7 +90,7 @@ for ll=1:length(ch)
 for kk=1:5
 for n=1:size(Data_reconst{ll,kk},3)
     
-Data_reconst_aligen{ll,kk}(:,:,n)=Alignment(Data_reconst{ll,kk}(:,:,n),mean_poses{1,1}(:,:,1));
+Data_reconst_aligen{ll,kk}(:,:,n) = UPPER.funcs.Alignment(Data_reconst{ll,kk}(:,:,n),mean_poses{1,1}(:,:,1));
 
 end
 end
@@ -100,20 +100,20 @@ end
 ND=Np*Framedim;
 for ll=1:length(ch)
 for kk=1:5
- Data_reconst_aligen_2d{ll,kk}=reshape(Data_reconst_aligen{ll,kk},[ND,size(Data_reconst{ll,kk},3)]);
+ Data_reconst_aligen_2d{ll,kk} = UPPER.funcs.reshape(Data_reconst_aligen{ll,kk},[ND,size(Data_reconst{ll,kk},3)]);
 end
 end
 
 %%%%%
  
 for kk=1:5
-[~, ~, ~, eignValues_rf1(:,:,kk), eignVectors_rf1(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{1,kk},false);
-[~, ~, ~, eignValues_rf2(:,:,kk), eignVectors_rf2(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{2,kk},false);
-[~, ~, ~, eignValues_rf3(:,:,kk), eignVectors_rf3(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{3,kk},false);
-[~, ~, ~, eignValues_rf4(:,:,kk), eignVectors_rf4(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{4,kk},false);
-[~, ~, ~, eignValues_rf5(:,:,kk), eignVectors_rf5(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{5,kk},false);
-[~, ~, ~, eignValues_rf6(:,:,kk), eignVectors_rf6(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{6,kk},false);
-[~, ~, ~, eignValues_rf7(:,:,kk), eignVectors_rf7(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{7,kk},false);
+[~, ~, ~, eignValues_rf1(:,:,kk), eignVectors_rf1(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{1,kk},false);
+[~, ~, ~, eignValues_rf2(:,:,kk), eignVectors_rf2(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{2,kk},false);
+[~, ~, ~, eignValues_rf3(:,:,kk), eignVectors_rf3(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{3,kk},false);
+[~, ~, ~, eignValues_rf4(:,:,kk), eignVectors_rf4(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{4,kk},false);
+[~, ~, ~, eignValues_rf5(:,:,kk), eignVectors_rf5(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{5,kk},false);
+[~, ~, ~, eignValues_rf6(:,:,kk), eignVectors_rf6(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{6,kk},false);
+[~, ~, ~, eignValues_rf7(:,:,kk), eignVectors_rf7(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{7,kk},false);
 
 end
 

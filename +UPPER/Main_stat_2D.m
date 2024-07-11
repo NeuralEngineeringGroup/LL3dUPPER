@@ -1,7 +1,7 @@
 %Evaluation of the 2D data
 clear all; close all 
 %%
-Reconst_method=load('Result_040222_95_percent')
+Reconst_method = load('Result_040222_95_percent')
 
 mean_pose_all=Reconst_method.mean_pose_3D;
 Data_r=Reconst_method.Data_r;
@@ -16,13 +16,13 @@ for i=1:Ns
   RawData2D_i(:,:,i)= RawData2D_2(:,:,i)' ;
 end
 RawData2D_full=RawData2D_i;
-[Np Dim Nss]=size(RawData2D_full);
+[Np, Dim, Nss]=size(RawData2D_full);
 
 
 RawData2D_primary=RawData2D_i;
 RawData2D_i(9:11,:,:)=[];
 %plot2D_pose(RawData2D(:,:,2),false)
-[ Np Dim Ns]=size(RawData2D_i);
+[Np, Dim, Ns]=size(RawData2D_i);
 %%
 
 ch=[0.133333,0.066666,0.033333,0.01666,0.008333,0.004167,0.002084];
@@ -33,7 +33,7 @@ Nsample=round(Nss*ch(K));
 Rand_ind = randsample(Nss,Nsample);
 RawData2D=RawData2D_i(:,:,Rand_ind );
 %RawData3D=RawData3D_full;
-[Np Dim Ns]=size(RawData2D);
+[Np, Dim, Ns]=size(RawData2D);
 %%%trian set
 %random selection of the train data and estimation of model on train data
 %%%%%%%%%%%
@@ -42,15 +42,15 @@ N=Ratio*Ns;
 Rand_train=randsample(Ns, N);
 D_train=RawData2D(:,:,Rand_train);
 %%%%%%%%%%%
-mean_pose_3D = Estimate_mean_RANSAC(D_train, false);
+mean_pose_3D = UPPER.funcs.estimate_mean_pose_RANSAC(D_train, false);
 %%%%%%%%%%%
-Data_aligne=Alignment(D_train,mean_pose_3D);
+Data_aligne = UPPER.funcs.Alignment(D_train,mean_pose_3D);
 %%%%%%%%%%%
 J = 5;
-Data_KNN_2D = Near_NaN_Euclidian(Data_aligne, J,false);
+Data_KNN_2D = UPPER.funcs.knn_impute_points(Data_aligne, J,false);
 Data_KNN_P=Data_KNN_2D;
 %%%%%%%%%%%
-[mean_pose_ppca, ~, Cov_pPCA, eignValues, eignVectors] = pPCA(Data_KNN_2D,false);
+[mean_pose_ppca, ~, Cov_pPCA, eignValues, eignVectors] = UPPER.funcs.pPCA(Data_KNN_2D,false);
 mean_pose_2D_ppca = reshape(mean_pose_ppca,[Dim,Np,1])';
 
 for f=1:length(eignValues)
@@ -63,13 +63,13 @@ end
 Data_test=RawData2D;
 is_outlier = false(Np,Dim,Ns);
 for n = 1:Ns
-    is_outlier(:,:,n) = detect_outliers(squeeze(Data_test(:,:,n)), mean_pose_2D_ppca, Cov_pPCA); 
+    is_outlier(:,:,n) = UPPER.funcs.detect_outliers(squeeze(Data_test(:,:,n)), mean_pose_2D_ppca, Cov_pPCA); 
 end
 Data_test(is_outlier==1) = NaN;
 Outlier_percent_fram=(length(find(sum(sum(isnan(Data_test)))))/(Ns))*100;
 
 %re-align data without outliers (very important!!!) 
-Data_3D_alignment_WO = Alignment(Data_test, mean_pose_3D);
+Data_3D_alignment_WO = UPPER.funcs.Alignment(Data_test, mean_pose_3D);
 Data_alignment_WO_2D=[];  %reshape
 for j=1: length(Data_3D_alignment_WO)
     D=[];
@@ -79,16 +79,16 @@ for j=1: length(Data_3D_alignment_WO)
     end
     Data_alignment_WO_2D(:,j)=D';
 end
-Data_reconstruct = Theoritical_Estimate_Correction(Data_alignment_WO_2D,mean_pose_ppca,Cov_pPCA);
+Data_reconstruct = UPPER.funcs.theoretical_estimate_correction(Data_alignment_WO_2D,mean_pose_ppca,Cov_pPCA);
 %%%
-Data_reconstruct_2=reshape(Data_reconstruct,[Dim,Np,length(Data_reconstruct)]); %reshape in other way and transpose it
+Data_reconstruct_2 = reshape(Data_reconstruct,[Dim,Np,length(Data_reconstruct)]); %reshape in other way and transpose it
 Data_reconstruct_3D=[];
 for v=1:length(Data_reconstruct_2)
   Data_reconstruct_3D(:,:,v)= Data_reconstruct_2(:,:,v)' ;
 end
 %---->ahould aligne to its mean pose or all ali=ligne to one mean pose
-%Data_reconstruct_3D_align=Alignment(Data_reconstruct_3D, mean_pose_3D);
-Data_reconstruct_3D_align=Alignment(Data_reconstruct_3D, mean_pose_all);
+%Data_reconstruct_3D_align=UPPER.funcs.Alignment(Data_reconstruct_3D, mean_pose_3D);
+Data_reconstruct_3D_align = UPPER.funcs.Alignment(Data_reconstruct_3D, mean_pose_all);
 
 Data_reconstruct_2D_align=[];
 for m=1:length(Data_reconstruct_2)
@@ -100,7 +100,12 @@ for m=1:length(Data_reconstruct_2)
     Data_reconstruct_2D_align(:,m)=F';
 end
 
-[mean_reconstructed_ppca, NumDimcut_r, Cov_pPCA_reconstructed, eignValues_reconstructed, eignVectors_reconstructed] = pPCA_Ordinary(Data_reconstruct_2D_align,false);
+[mean_reconstructed_ppca, ...
+	NumDimcut_r, ...
+	Cov_pPCA_reconstructed, ...
+	eignValues_reconstructed, ...
+	eignVectors_reconstructed ...
+	] = UPPER.funcs.pPCA_Ordinary(Data_reconstruct_2D_align,false);
 
 mean_poses{K,L}=mean_pose_3D;
 Eigen{K,L}= eignVectors;
@@ -134,7 +139,7 @@ for ll=1:length(ch)
 for kk=1:10
 for n=1:size(Data_reconst{ll,kk},3)
     
-Data_reconst_aligen{ll,kk}(:,:,n)=Alignment(Data_reconst{ll,kk}(:,:,n),mean_poses{1,1}(:,:,1));
+Data_reconst_aligen{ll,kk}(:,:,n) = UPPER.funcs.Alignment(Data_reconst{ll,kk}(:,:,n),mean_poses{1,1}(:,:,1));
 
 end
 end
@@ -156,13 +161,13 @@ end
 end
 
 for kk=1:10
-[~, ~, ~, eignValues_rf1(:,:,kk), eignVectors_rf1(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{1,kk},false);
-[~, ~, ~, eignValues_rf2(:,:,kk), eignVectors_rf2(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{2,kk},false);
-[~, ~, ~, eignValues_rf3(:,:,kk), eignVectors_rf3(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{3,kk},false);
-[~, ~, ~, eignValues_rf4(:,:,kk), eignVectors_rf4(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{4,kk},false);
-[~, ~, ~, eignValues_rf5(:,:,kk), eignVectors_rf5(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{5,kk},false);
-[~, ~, ~, eignValues_rf6(:,:,kk), eignVectors_rf6(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{6,kk},false);
-[~, ~, ~, eignValues_rf7(:,:,kk), eignVectors_rf7(:,:,kk)] = pPCA_Ordinary(Data_reconst_aligen_2d{7,kk},false);
+[~, ~, ~, eignValues_rf1(:,:,kk), eignVectors_rf1(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{1,kk},false);
+[~, ~, ~, eignValues_rf2(:,:,kk), eignVectors_rf2(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{2,kk},false);
+[~, ~, ~, eignValues_rf3(:,:,kk), eignVectors_rf3(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{3,kk},false);
+[~, ~, ~, eignValues_rf4(:,:,kk), eignVectors_rf4(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{4,kk},false);
+[~, ~, ~, eignValues_rf5(:,:,kk), eignVectors_rf5(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{5,kk},false);
+[~, ~, ~, eignValues_rf6(:,:,kk), eignVectors_rf6(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{6,kk},false);
+[~, ~, ~, eignValues_rf7(:,:,kk), eignVectors_rf7(:,:,kk)] = UPPER.funcs.pPCA_Ordinary(Data_reconst_aligen_2d{7,kk},false);
 
 end
 

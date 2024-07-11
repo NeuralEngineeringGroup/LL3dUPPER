@@ -38,7 +38,7 @@ for ii=1:opts.iter
     candidate = data(:,:,randsample(index_Non_Nan,1)); % Select a random pose as estimate for mean
     sample = data(:,:,randsample(N,sample_size)); % Select random sample
 
-    Sample_Align_3D = Alignment(sample,candidate); % Align sample points to candidate
+    Sample_Align_3D = UPPER.funcs.Alignment(sample,candidate); % Align sample points to candidate
 	
 	Dist2 = mean((Sample_Align_3D - candidate).^2,[1 2]); % Squared Euclidean distance
 
