@@ -1,4 +1,4 @@
-function mean_sample_3D=Estimate_mean_RANSAC(data,plot_results,opts)
+function mean_pose=Estimate_mean_RANSAC(data,plot_results,opts)
 %Riccardo Suggestion for alignment (Riccardo modified the 200421 code in
 %Github)
 arguments
@@ -33,25 +33,22 @@ dist_threshold = quantile(dist,opts.neighbor_threshold);
 
 %% RANSAC
 NNeigh = zeros(opts.iter,1);
-New_ref = zeros(Nparts,Ndims,opts.iter,typ);
+candidate_means = zeros(Nparts,Ndims,opts.iter,typ);
 for ii=1:opts.iter
-    %%% Select a random pose as estimate for mean
-    Rand_ind_ref = randsample(index_Non_Nan,1);
-    mean_sample_3D = data(:,:,Rand_ind_ref);
+    candidate = data(:,:,randsample(index_Non_Nan,1)); % Select a random pose as estimate for mean
+    sample = data(:,:,randsample(N,sample_size)); % Select random sample
+
+    Sample_Align_3D = Alignment(sample,candidate); % Align sample points to candidate
 	
-    Rand_ind_sample=randsample(N,sample_size);
-    dataSample=data(:,:,Rand_ind_sample);
-    %%%% Align
-    Sample_Align_3D=Alignment(dataSample,mean_sample_3D);
-	
-	%%% Squared Euclidean distance
-	Dist2 = mean((Sample_Align_3D - mean_sample_3D).^2,[1 2]);
-    %%% Count neighbours
-    NNeigh(ii) = sum(Dist2<dist_threshold);
-    New_ref(:,:,ii) = mean(Sample_Align_3D(:,:,ind),3,"omitnan");
+	Dist2 = mean((Sample_Align_3D - candidate).^2,[1 2]); % Squared Euclidean distance
+
+	inliers = Dist2<dist_threshold; % Identify inliers (neighbors)
+
+    NNeigh(ii) = sum(inliers); % Count neighbours
+    candidate_means(:,:,ii) = mean(Sample_Align_3D(:,:,inliers),3,"omitnan"); % Compute new mean pose
 end
-[~,best_candidate]=max(NNeigh);  %<---- Aghileh Change
-mean_sample_3D=New_ref(:,:,best_candidate);
+[~,best_candidate] = max(NNeigh);  %<---- Aghileh Change
+mean_pose = candidate_means(:,:,best_candidate);
 
 %%% figure
 if plot_results
