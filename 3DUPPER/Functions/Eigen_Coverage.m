@@ -1,16 +1,15 @@
-
-function Eigen_Coverage(RawData3D_full,Threshold_Eigen,Threshold_Outliers,graph)
+function Eigen_Coverage(RawData3D_full,Threshold_Eigen,Threshold_Outliers,plot_results)
 [Np, Framedim,Ns]=size(RawData3D_full);
 
 Ratio=125/Ns;
 
 ch=[64,32,16,8,4,2,1];
 
-for j=1:length(ch)
-for i=1:5
+for jj=1:length(ch)
+for ii=1:5
 %%%%%%%%%%%%%%%%%%%%%%%%%% sampling from data
 
-Nsample=round(Ns*ch(j)*Ratio);
+Nsample=round(Ns*ch(jj)*Ratio);
 Rand_ind = randsample(Ns,Nsample);
 RawData3D=RawData3D_full(:,:,Rand_ind );
 
@@ -30,8 +29,8 @@ Data_KNN_reshape=reshape(Data_3D_KNN, Np*Framedim,Nsample);
 
 mean_pose_3D_ppca = reshape(mean_pose_ppca,[Np,Framedim]);
 
-for k=1:length(eignValues)
-    error_project(k)=sum(eignValues(1:k))/sum(eignValues);
+for kk=1:length(eignValues)
+    error_project(kk)=sum(eignValues(1:kk))/sum(eignValues);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%detect & remove outliers
@@ -56,28 +55,28 @@ Data_reconstruct_3D = reshape(Data_reconstruct, Np, Framedim, Nsample);
 % Data_reconstruct_2D_align=reshape(Data_reconstruct_3D_align,Np*Framedim,Nsample);
 % [mean_reconstructed_ppca, NumDimcut_r, Cov_pPCA_reconstructed, eignValues_reconstructed, eignVectors_reconstructed] = pPCA_Ordinary(Data_reconstruct_2D_align,false);
 
-mean_poses{j,i}=mean_pose_3D;
+mean_poses{jj,ii}=mean_pose_3D;
 %Eigen{j,i}= eignVectors;
 %eignVectors_r{j,i}=eignVectors_reconstructed;
-Outlier{j,i}=Outlier_percent_fram;
-Comulative_eigen{j,i}=error_project;
-Data_reconst{j,i}=Data_reconstruct_3D;
-Data_Raw{j,i}=RawData3D;
-j
-i
+Outlier{jj,ii}=Outlier_percent_fram;
+Comulative_eigen{jj,ii}=error_project;
+Data_reconst{jj,ii}=Data_reconstruct_3D;
+Data_Raw{jj,ii}=RawData3D;
+jj
+ii
 end
 end
 save('Stat_UPPEER_Eigen_Coverage')
 
-if graph
+if plot_results
     
 %%% %eigenvalues
 figure 
-for i=1:35
-    hold(subplot(7,5,i), 'on');
+for ii=1:35
+    hold(subplot(7,5,ii), 'on');
 for ll=1:length(ch)
 for kk=1:5
-    subplot(7,5,i)
+    subplot(7,5,ii)
     plot(Comulative_eigen{ll,kk}(:,:))   
 end
 end

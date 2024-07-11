@@ -25,7 +25,7 @@ for j=1:length(RawData3D_full)
     kk=find ((sum(isnan(RawData3D(:,:,j)),2))>1);
     Data_reconstruct=Data_reconstruct_3D_align(:,:,j);
     Dra_Raw=RawData3D(:,:,j);
-    if isempty(kk) ==1;
+    if isempty(kk)==1
         [~, ~, Trans1] = procrustes(Dra_Raw, Data_reconstruct, 'Scaling', false,'Reflection',false);
         Y_sample2 = Trans1.b*Data_reconstruct_3D_align(:,:,j)*Trans1.T + repmat(Trans1.c(1,:),Np,1);
         Reconstructed_data_final(:,:,j) = Y_sample2;
@@ -38,8 +38,7 @@ for j=1:length(RawData3D_full)
         [~, ~, Trans] = procrustes(Dra_Raw, Data_reconstruct, 'Scaling', false,'Reflection',false);
         Y_sample = Trans.b*Data_reconstruct_3D_align(:,:,j)*Trans.T + repmat(Trans.c(1,:),Np,1);
         Reconstructed_data_final(:,:,j) = Y_sample;
-    end
-    j
+	end
 end
   Data_reconstruct_3D=Reconstructed_data_final;    
 

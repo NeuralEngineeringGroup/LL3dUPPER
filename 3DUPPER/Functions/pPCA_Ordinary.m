@@ -1,4 +1,4 @@
-function [mean_data NumDimcut Cov_pPCA eignValues eignVectors]=pPCA_Ordinary(Data,figures)
+function [mean_data, NumDimcut, Cov_pPCA, eignValues, eignVectors]=pPCA_Ordinary(Data,plot_results)
 
 NumberSample=size(Data,2);
 NP=(size(Data,1));
@@ -31,7 +31,7 @@ Cov_pPCA=eignVectors*(diag(diagonal_vector))*eignVectors';
 % pcolor(Cov_Data0-Cov_pPCA)
 % colorbar
 % title('Diffrence of Original and Recounstructed Robust Minimum Covariance')
-if figures
+if plot_results
 figure
 plot(error_project,'LineWidth',3)
 xlabel('Number of eigen value')
