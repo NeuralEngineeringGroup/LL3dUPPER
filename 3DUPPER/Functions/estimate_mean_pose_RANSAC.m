@@ -1,4 +1,4 @@
-function mean_pose=Estimate_mean_RANSAC(data,plot_results,opts)
+function [mean_pose] = estimate_mean_pose_RANSAC(data,plot_results,opts)
 %Riccardo Suggestion for alignment (Riccardo modified the 200421 code in
 %Github)
 arguments
