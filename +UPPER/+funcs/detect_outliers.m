@@ -1,10 +1,10 @@
-function[is_outlier] = detect_outliers(X,mu,C,Threshold_outlier,opts)
+function[is_outlier] = detect_outliers(X,mu,C,outlier_threshold,opts)
 %%
 arguments
 	X
 	mu
 	C
-	Threshold_outlier			(1,1)	double	= 0.99
+	outlier_threshold			(1,1)	double	= 0.99
 	opts.threshold_multiplier	(1,1)	double
 end
 %%
@@ -47,7 +47,7 @@ while ~stop_search
 	inlier = list_bp(indmin,:);
 	
 	%compare with threshold
-	TH = opts.threshold_multiplier*chi2inv(Threshold_outlier,Ndim*Ninlier);
+	TH = opts.threshold_multiplier*chi2inv(outlier_threshold,Ndim*Ninlier);
 	if minC<TH
 		stop_search = true;
 	elseif Ninlier<0.5*Nbp
