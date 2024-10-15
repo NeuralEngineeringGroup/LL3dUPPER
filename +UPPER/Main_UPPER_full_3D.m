@@ -1,14 +1,14 @@
 % Main Body code for the estimation of Stastical Shape Model(SSM)
 
 min_p = 0.8;
-XYZ = load("trial_xyz.mat").trial_xyz;
+trial_xyz = load("trial_xyz.mat").trial_xyz;
 
 % while sum(cellfun(@height, XYZ.xyz))>10000
 % 	XYZ = XYZ(1:2:end,:);
 % end
 
-XYZ_P = cat(1,XYZ.p{:});
-XYZ = cat(1,XYZ.xyz{:});
+XYZ_P = cat(1,trial_xyz.p{:});
+XYZ = cat(1,trial_xyz.xyz{:});
 XYZ = XYZ + 0./all(XYZ_P>=min_p,3);
 clear XYZ_P
 
